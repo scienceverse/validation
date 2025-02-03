@@ -1,0 +1,15 @@
+vartiable_name;variable_description;values
+id;Study identifier;
+doi;Digital Object Identifier;
+prereg;Is there a preregistration statement?;
+prereg_statement;preregistration statement;
+prereg_site;Preregistration site where the study was preregistered;
+prereg_available;Can the preregistration be accessed?;
+data;Is there a data availability statement?;
+data_statement;data statement;
+data_repo;repository where data is stored;
+data_available;can the data be accessed and downloaded?;
+code;Is there a code statement?;
+code_statement;code statement;
+code_repo;repository where code is stored;
+data_available;can the code be accessed and downloaded?;

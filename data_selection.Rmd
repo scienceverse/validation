@@ -1,0 +1,277 @@
+---
+title: "Extracting primary data from meta-science papers"
+output: html_document
+date: "2025-01-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE}
+
+# Load packages
+library(here)
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(janitor)
+
+```
+
+# Data processing
+
+```{r echo=FALSE}
+
+# DOIs of primary studies are not in the primary file so we need to extract 
+# them from another file
+doi_study_1 <- read.csv(here("primary_studies", 
+                             "study_1", 
+                             "doi_study_1.csv")) %>%
+  clean_names() %>%
+  select(id = article_id, 
+         doi)
+
+data_study_1_proces <- read.csv(here("primary_studies", 
+                              "study_1", 
+                              "data_study_1.csv")) %>% 
+  select(id = article_id, 
+         research_design = research_design_agreed, 
+         prereg = prereg_statement_agreed,
+         prereg_site = prereg_access_method_agreed,
+         prereg_available = prereg_access_status_agreed,
+         data = data_statement_agreed, 
+         data_repo = data_access_method_agreed,
+         data_available = data_access_status_agreed, 
+         code = analysis_statement_agreed,
+         code_repo = analysis_access_method_agreed,
+         code_available = analysis_access_status_agreed) %>%
+  left_join(doi_study_1, by = "id")
+
+```
+
+
+```{r echo=FALSE}
+
+# DOIs of primary studies are not in the primary file so we need to extract 
+# them from another file
+doi_study_2 <- read.csv(here("primary_studies", 
+                             "study_2", 
+                             "doi_study_2.csv")) %>%
+  clean_names() %>%
+  select(id, doi)
+
+
+data_study_2_process <- read.csv(here("primary_studies", 
+                                      "study_2", 
+                                      "data_study_2.csv")) %>% 
+  select(id = Article.ID.,
+         prereg = Does.the.article.state.whether.or.not.the.study..or.some.aspect.of.the.study..was.pre.registered.,
+         prereg_statement = Please.copy.and.paste.the.pre.registration.statement.here.,
+         data = Does.the.article.state.whether.or.not.data.are.available.,
+         data_statement = Please.copy.and.paste.the.data.availability.statement.here.,
+         data_repo = How.does.the.statement.indicate.the.data.are.available.,
+         data_acess = Can.you.access..download..and.open.the.data.files.,
+         code = Does.the.article.state.whether.or.not.analysis.scripts.are.available.,
+         code_statement = Please.copy.and.paste.the.analysis.script.availability.statement.here.,
+         code_repo = How.does.the.statement.indicate.the.analysis.scripts.are.available.,
+         code_acess = Can.you.access..download..and.open.the.analysis.files.,
+         research_design = What.type.of.study.is.being.reported.) %>%
+  left_join(doi_study_2, by = "id") %>%
+  select(-id)
+
+```
+
+
+```{r echo=FALSE}
+
+data_study_3_process <- read.csv(here("primary_studies", 
+                                      "study_3", 
+                                      "data_study_3.csv"),
+                                 skip = 1) %>% # skip first column for column name
+  select(doi,
+         prereg = pre_reg, 
+         prereg_statement = link,
+         research_design = type)
+
+```
+
+
+```{r echo=FALSE}
+
+# DOIs available in PDF (see papers.xlsx)
+data_study_4_process <- read.csv2(here("primary_studies", 
+                                       "study_4", 
+                                       "data_study_4.csv")) %>%
+  clean_names() %>% 
+  select(id = paper_id,
+         prereg = preregistered,
+         data_available = data_accessible,
+         code)
+
+```
+
+
+```{r echo=FALSE}
+
+data_study_5_process <- read.csv(here("primary_studies", 
+                                      "study_5", 
+                                      "data_study_5.csv")) %>%
+  clean_names() %>% 
+  select(doi,
+         code = code_shared,
+         code_statement = linkto_code,
+         code_repo = repository,
+         data = data_shared)
+
+```
+
+
+```{r echo=FALSE}
+
+data_study_6_process <- read.csv(here("primary_studies", 
+                                      "study_6", 
+                                      "data_study_6.csv")) %>%
+  clean_names() %>%
+  select(title,
+         code = code_shared,
+         code_statement = linkto_code,
+         code_repo = repository,
+         data = data_shared) 
+
+```
+
+
+```{r echo=FALSE}
+
+doi_study_7 <- read.csv(here("primary_studies", 
+                             "study_7", 
+                             "doi_study_7.csv")) %>%
+  clean_names() %>%
+  select(id, doi)
+
+data_study_7_process <- read.csv(here("primary_studies", 
+                                      "study_7", 
+                                      "data_study_7.csv")) %>%
+  clean_names() %>%
+  select(id = article_id,
+         data = does_the_article_state_whether_or_not_the_data_are_available,
+         data_repo = what_does_the_link_lead_to,
+         data_available = were_you_able_to_successfully_download_and_open_the_data_file_s,
+         code = are_analysis_scripts_also_available_to_download) %>%
+  left_join(doi_study_7, by = "id") %>%
+  select(-id)
+  
+```
+
+
+```{r echo=FALSE}
+
+data_study_8_process <- read.csv(here("primary_studies",
+                                      "study_8",
+                                      "data_study_8.csv")) %>%
+  clean_names() %>%
+  mutate(data = case_when(data_shared == 0 ~ "no", 
+                          TRUE ~ "yes"),    
+         code = case_when(code_shared == 0 ~ "no",
+                          TRUE ~ "yes")) %>%
+  filter(eligble == 1) %>%
+  mutate(research_design = case_when((is.na(editorial_or_letter) & 
+                                      is.na(systematic_narrative_scoping_review) & 
+                                      is.na(meta_analysis)) ~ "study",
+                                      editorial_or_letter == 1 ~ "editorial_or_letter",
+                                      systematic_narrative_scoping_review == 1 ~ "systematic_review",
+                                      meta_analysis == 1 ~ "meta-analysis")) %>%
+  select(title,
+         research_design,
+         data,
+         code)
+
+```
+
+
+```{r echo=FALSE}
+data_study_9_process <- read_excel(here("primary_studies", 
+                                        "study_9", 
+                                        "data_study_9.xlsx"), 
+                                   sheet = "541_Final") %>%
+  clean_names() %>%
+  select(id = pmid,
+         data = data_code) %>%
+  mutate(data = case_when(data == 0 ~ "no",
+                          data == 1 ~ "yes",
+                          data == 88 ~ NA_character_))
+
+
+```
+
+
+```{r echo=FALSE}
+
+data_study_10_process <- read.csv2(here("primary_studies", 
+                                        "study_10",
+                                        "data_study_10.csv")) %>%
+  clean_names() %>%
+  select(title, # including title because there are some DOIs missing
+         doi,
+         prereg = pre_registered,
+         data = open_data,
+         data_repo = source_om,
+         code = om_script) %>%
+  mutate(across(where(is.numeric), ~ case_when(. == 0 ~ "no",
+                                          . == 1 ~ "yes",
+                                          TRUE ~ NA_character_)))
+
+```
+
+```{r echo=FALSE}
+
+data_study_11_process <- read.csv(here("primary_studies", 
+                                       "study_11", 
+                                       "data_study_11.csv")) %>%
+  clean_names() %>%
+  select(doi,
+         prereg = does_the_article_state_whether_or_not_the_study_or_some_aspect_of_the_study_was_pre_registered,
+         prereg_statement = please_copy_and_paste_the_pre_registration_statement_here,
+         prereg_site = where_does_the_article_indicate_the_pre_registration_is_located,
+         prereg_available = can_you_access_and_open_the_pre_registration,
+         data = does_the_article_state_whether_or_not_data_are_available,
+         data_statement = please_copy_and_paste_the_data_availability_statement_here,
+         data_repo = how_does_the_statement_indicate_the_data_are_available,
+         data_available = can_you_access_download_and_open_the_data_files,
+         code = does_the_article_state_whether_or_not_analysis_scripts_are_available,
+         code_statement = please_copy_and_paste_the_analysis_script_availability_statement_here,
+         code_repo = how_does_the_statement_indicate_the_analysis_scripts_are_available,
+         code_available = can_you_access_download_and_open_the_analysis_files)
+     
+```
+
+
+```{r echo = FALSE}
+
+data_study_12_process <- read_excel(here("primary_studies", 
+                                         "study_12", 
+                                         "data_study_12.xlsx")) %>%
+  clean_names() %>%
+  select(id = article_title,
+         code = open_code,
+         research_design = study_design,
+         prereg = registration_status,
+         data = open_data)
+  
+```
+
+```{r echo=FALSE}
+
+data_study_13_process <- read_excel(here("primary_studies",
+                                         "study_13",
+                                         "data_study_13.xlsx")) %>%
+  select(doi,
+         data_statement,
+         )
+  
+```
+
+
+
+
